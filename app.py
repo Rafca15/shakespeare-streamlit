@@ -134,31 +134,27 @@ def encode(s):
 def decode(l):
     return ''.join([itos[i] for i in l])
 
+# Initialize conversation history
 if 'conversation' not in st.session_state:
     st.session_state.conversation = []
 
+# User input
 user_input = st.text_input("Enter your text in modern English:")
-
-# the following block allows for the generation of only one response
-# if st.button("Generate Response"):
-#     if user_input:
-#         context = torch.tensor([encode(user_input)], dtype=torch.long, device=device)
-#         response_idx = model.generate(context, max_new_tokens=100)[0].tolist()
-#         response = decode(response_idx)
-#         st.text_area("Shakespearean Response:", value=response, height=200)
-#     else:
-#         st.warning("Please enter some text to start the conversation.")
-
-# the following block allows for multi-turn conversation
 
 if st.button("Send"):
     if user_input:
         # Append user input to conversation
         st.session_state.conversation.append({"role": "user", "text": user_input})
 
-        # Generate chatbot response
-        context_text = "".join([msg["text"] for msg in st.session_state.conversation if msg["role"] == "user"])
+        # Use only the most recent user input as context
+        context_text = user_input  # Only use the latest input
         context = torch.tensor([encode(context_text)], dtype=torch.long, device=device)
+
+        # Ensure context does not exceed block_size
+        if context.shape[1] > block_size:
+            context = context[:, -block_size:]  # Truncate to block_size
+
+        # Generate chatbot response
         response_idx = model.generate(context, max_new_tokens=100)[0].tolist()
         response = decode(response_idx).strip()
 
@@ -167,7 +163,7 @@ if st.button("Send"):
     else:
         st.warning("Please enter some text to start the conversation.")
 
-# Display conversation
+# Display conversation history
 st.subheader("Conversation History:")
 for msg in st.session_state.conversation:
     if msg["role"] == "user":
