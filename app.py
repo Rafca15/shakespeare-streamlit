@@ -114,7 +114,7 @@ st.title("Shakespeare Chatbot")
 
 device = 'cpu'
 vocab_size = 65  # Replace with your vocab_size
-block_size = 256
+block_size = 128
 n_embd = 384
 n_head = 6
 n_layer = 6
