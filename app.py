@@ -136,11 +136,37 @@ def decode(l):
 
 user_input = st.text_input("Enter your text in modern English:")
 
-if st.button("Generate Response"):
+# the following block allows for the generation of only one response
+# if st.button("Generate Response"):
+#     if user_input:
+#         context = torch.tensor([encode(user_input)], dtype=torch.long, device=device)
+#         response_idx = model.generate(context, max_new_tokens=100)[0].tolist()
+#         response = decode(response_idx)
+#         st.text_area("Shakespearean Response:", value=response, height=200)
+#     else:
+#         st.warning("Please enter some text to start the conversation.")
+
+# the following block allows for multi-turn conversation
+if st.button("Send"):
     if user_input:
-        context = torch.tensor([encode(user_input)], dtype=torch.long, device=device)
+        # Append user input to conversation
+        st.session_state.conversation.append({"role": "user", "text": user_input})
+
+        # Generate chatbot response
+        context_text = "".join([msg["text"] for msg in st.session_state.conversation if msg["role"] == "user"])
+        context = torch.tensor([encode(context_text)], dtype=torch.long, device=device)
         response_idx = model.generate(context, max_new_tokens=100)[0].tolist()
-        response = decode(response_idx)
-        st.text_area("Shakespearean Response:", value=response, height=200)
+        response = decode(response_idx).strip()
+
+        # Add chatbot response to conversation
+        st.session_state.conversation.append({"role": "chatbot", "text": response})
     else:
         st.warning("Please enter some text to start the conversation.")
+
+# Display conversation
+st.subheader("Conversation History:")
+for msg in st.session_state.conversation:
+    if msg["role"] == "user":
+        st.markdown(f"**You:** {msg['text']}")
+    else:
+        st.markdown(f"**Shakespearean Chatbot:** {msg['text']}")
