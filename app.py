@@ -134,6 +134,9 @@ def encode(s):
 def decode(l):
     return ''.join([itos[i] for i in l])
 
+if 'conversation' not in st.session_state:
+    st.session_state.conversation = []
+
 user_input = st.text_input("Enter your text in modern English:")
 
 # the following block allows for the generation of only one response
@@ -147,6 +150,7 @@ user_input = st.text_input("Enter your text in modern English:")
 #         st.warning("Please enter some text to start the conversation.")
 
 # the following block allows for multi-turn conversation
+
 if st.button("Send"):
     if user_input:
         # Append user input to conversation
