@@ -139,7 +139,7 @@ if 'conversation' not in st.session_state:
     st.session_state.conversation = []
 
 # User input
-user_input = st.text_input("Enter your text in modern English:")
+user_input = st.text_input("Enter your text in modern English:", key="user_input")
 
 if st.button("Send"):
     if user_input:
@@ -155,18 +155,40 @@ if st.button("Send"):
             context = context[:, -block_size:]  # Truncate to block_size
 
         # Generate chatbot response
-        response_idx = model.generate(context, max_new_tokens=100)[0].tolist()
+        response_idx = model.generate(context, max_new_tokens=50)[0].tolist()  # Reduced max_new_tokens for brevity
         response = decode(response_idx).strip()
+
+        # Clean up the response (remove unwanted characters or formatting)
+        response = response.split("\n")[0]  # Take only the first line of the response
+        response = response.split(".")[0] + "." if "." in response else response  # End at the first sentence
 
         # Add chatbot response to conversation
         st.session_state.conversation.append({"role": "chatbot", "text": response})
     else:
         st.warning("Please enter some text to start the conversation.")
 
-# Display conversation history
+# Display conversation history in a chat-like interface
 st.subheader("Conversation History:")
 for msg in st.session_state.conversation:
     if msg["role"] == "user":
-        st.markdown(f"**You:** {msg['text']}")
+        st.markdown(
+            f"""
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                <div style="background: #0078D4; color: white; padding: 10px; border-radius: 10px; max-width: 70%;">
+                    {msg["text"]}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     else:
-        st.markdown(f"**Shakespearean Chatbot:** {msg['text']}")
+        st.markdown(
+            f"""
+            <div style="display: flex; justify-content: flex-start; margin-bottom: 10px;">
+                <div style="background: #E1E1E1; color: black; padding: 10px; border-radius: 10px; max-width: 70%;">
+                    {msg["text"]}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
