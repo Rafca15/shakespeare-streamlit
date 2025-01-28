@@ -138,128 +138,55 @@ def decode(l):
 if 'conversation' not in st.session_state:
     st.session_state.conversation = []
 
-# Display conversation history in a chat-like interface
-st.subheader("Conversation History:")
-chat_history = st.empty()  # Placeholder for chat history
-
-# Function to display the conversation
+# Display conversation history
 def display_conversation():
-    with chat_history.container():
-        for msg in st.session_state.conversation:
-            if msg["role"] == "user":
-                st.markdown(
-                    f"""
-                    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-                        <div style="background: #0078D4; color: white; padding: 10px; border-radius: 10px; max-width: 70%;">
-                            {msg["text"]}
-                        </div>
+    for msg in st.session_state.conversation:
+        if msg["role"] == "user":
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                    <div style="background: #0078D4; color: white; padding: 10px; border-radius: 10px; max-width: 70%;">
+                        {msg["text"]}
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f"""
-                    <div style="display: flex; justify-content: flex-start; margin-bottom: 10px;">
-                        <div style="background: #E1E1E1; color: black; padding: 10px; border-radius: 10px; max-width: 70%;">
-                            {msg["text"]}
-                        </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: flex-start; margin-bottom: 10px;">
+                    <div style="background: #E1E1E1; color: black; padding: 10px; border-radius: 10px; max-width: 70%;">
+                        {msg["text"]}
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-# Display the conversation initially
 display_conversation()
 
-# Input box at the bottom of the page
-with st.container():
-    st.write("---")  # Separator line
-    user_input = st.text_input("Enter your text in modern English:", key="user_input", value="", placeholder="Type your message here...")
+# Input box for user input
+user_input = st.text_input("Enter your text in modern English:", key="user_input_main", placeholder="Type your message here...")
 
-    if st.button("Send"):
-        if user_input:
-            # Append user input to conversation
-            st.session_state.conversation.append({"role": "user", "text": user_input})
-
-            # Use only the most recent user input as context
-            context_text = user_input  # Only use the latest input
-            context = torch.tensor([encode(context_text)], dtype=torch.long, device=device)
-
-            # Ensure context does not exceed block_size
-            if context.shape[1] > block_size:
-                context = context[:, -block_size:]  # Truncate to block_size
-
-            # Generate chatbot response
-            response_idx = model.generate(context, max_new_tokens=50)[0].tolist()  # Reduced max_new_tokens for brevity
-            response = decode(response_idx).strip()
-
-            # Clean up the response (remove unwanted characters or formatting)
-            response = response.split("\n")[0]  # Take only the first line of the response
-            response = response.split(".")[0] + "." if "." in response else response  # End at the first sentence
-
-            # Add chatbot response to conversation
-            st.session_state.conversation.append({"role": "chatbot", "text": response})
-
-            # Clear the input box after sending
-            st.session_state.user_input = ""
-
-            # Re-display the conversation with the new messages
-            display_conversation()
-        else:
-            st.warning("Please enter some text to start the conversation.")
-
-# User input
-user_input = st.text_input("Enter your text in modern English:", key="user_input")
-
-if st.button("Send"):
+if st.button("Send", key="send_button_main"):
     if user_input:
         # Append user input to conversation
         st.session_state.conversation.append({"role": "user", "text": user_input})
 
-        # Use only the most recent user input as context
-        context_text = user_input  # Only use the latest input
-        context = torch.tensor([encode(context_text)], dtype=torch.long, device=device)
-
-        # Ensure context does not exceed block_size
+        # Prepare context and generate response
+        context = torch.tensor([encode(user_input)], dtype=torch.long, device=device)
         if context.shape[1] > block_size:
-            context = context[:, -block_size:]  # Truncate to block_size
+            context = context[:, -block_size:]
 
-        # Generate chatbot response
-        response_idx = model.generate(context, max_new_tokens=50)[0].tolist()  # Reduced max_new_tokens for brevity
+        response_idx = model.generate(context, max_new_tokens=50)[0].tolist()
         response = decode(response_idx).strip()
+        response = response.split("\n")[0].split(".")[0] + "."
 
-        # Clean up the response (remove unwanted characters or formatting)
-        response = response.split("\n")[0]  # Take only the first line of the response
-        response = response.split(".")[0] + "." if "." in response else response  # End at the first sentence
-
-        # Add chatbot response to conversation
+        # Append response to conversation
         st.session_state.conversation.append({"role": "chatbot", "text": response})
+
+        # Refresh conversation display
+        display_conversation()
     else:
         st.warning("Please enter some text to start the conversation.")
-
-# Display conversation history in a chat-like interface
-st.subheader("Conversation History:")
-for msg in st.session_state.conversation:
-    if msg["role"] == "user":
-        st.markdown(
-            f"""
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-                <div style="background: #0078D4; color: white; padding: 10px; border-radius: 10px; max-width: 70%;">
-                    {msg["text"]}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            f"""
-            <div style="display: flex; justify-content: flex-start; margin-bottom: 10px;">
-                <div style="background: #E1E1E1; color: black; padding: 10px; border-radius: 10px; max-width: 70%;">
-                    {msg["text"]}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
