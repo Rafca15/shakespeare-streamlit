@@ -139,7 +139,7 @@ def generate_response(prompt):
     
     # Generate the response
     with torch.no_grad():
-        output_ids = model.generate(input_ids, max_new_tokens=50)
+        output_ids = model.generate(input_ids, max_new_tokens=200)
     
     # Convert the output tensor to text
     response = ''.join([itos[i] for i in output_ids[0].tolist()])
