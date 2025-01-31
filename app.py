@@ -119,3 +119,54 @@ n_embd = 384
 n_head = 6
 n_layer = 6
 dropout = 0.2
+
+
+# Streamlit integration
+# Load the model (since it's already trained and saved as a .pth file)
+model = BigramLanguageModel(vocab_size, block_size, n_embd, n_head, n_layer, dropout)
+model.load_state_dict(torch.load('shakespeare_transformer.pth', map_location=device))
+model.to(device)
+model.eval()
+
+# Vocabulary handling
+chars = sorted(list(set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ .,;:!?-\n")))
+stoi = { ch:i for i,ch in enumerate(chars) }
+itos = { i:ch for i,ch in enumerate(chars) }
+
+# Function to generate responses
+def generate_response(prompt):
+    # Convert the prompt to a tensor
+    input_ids = torch.tensor([stoi[char] for char in prompt], dtype=torch.long).unsqueeze(0).to(device)
+    
+    # Generate the response
+    with torch.no_grad():
+        output_ids = model.generate(input_ids, max_new_tokens=50)
+    
+    # Convert the output tensor to text
+    response = ''.join([itos[i] for i in output_ids[0].tolist()])
+    return response
+
+# Streamlit app
+st.title("Shakespeare Chatbot")
+
+# Initialize session state to store chat history
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
+
+# Input text box for user input
+user_input = st.text_input("You: ", "")
+
+# When the user submits their input
+if user_input:
+    # Add user input to chat history
+    st.session_state.chat_history.append(f"You: {user_input}")
+    
+    # Generate a response from the model
+    bot_response = generate_response(user_input)
+    
+    # Add bot response to chat history
+    st.session_state.chat_history.append(f"Bot: {bot_response}")
+
+# Display the chat history
+for message in st.session_state.chat_history:
+    st.write(message)
