@@ -191,6 +191,13 @@ dropout = 0.2
 #     else:
 #         st.warning("Please enter some text to start the conversation.")
 
+# Load the trained model
+def load_model():
+    model = BigramLanguageModel(vocab_size, block_size, n_embd, n_head, n_layer, dropout)
+    # Load the trained weights from the .pth file in the repo
+    model.load_state_dict(torch.load('shakespeare_transformer.pth', map_location=torch.device('cpu')))
+    model.eval()
+    return model
 
 # Tokenizer and detokenizer (replace with your actual tokenization logic)
 def tokenize(text):
