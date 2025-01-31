@@ -110,8 +110,6 @@ class Block(nn.Module):
         x = x + self.ffwd(self.ln2(x))
         return x
 
-st.title("Shakespeare Chatbot")
-
 device = 'cpu'
 vocab_size = 65  # Replace with your vocab_size
 block_size = 128
